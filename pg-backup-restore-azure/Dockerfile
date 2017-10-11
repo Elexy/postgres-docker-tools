@@ -24,6 +24,6 @@ ENV SCHEDULE **None**
 
 ADD run.sh run.sh
 ADD backup.sh backup.sh
-# ADD restore.sh restore.sh
+ADD restore.sh restore.sh
 
 CMD ["sh", "run.sh"]
