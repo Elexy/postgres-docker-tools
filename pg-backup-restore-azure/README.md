@@ -1,12 +1,23 @@
-# postgres-backup-s3
+# postgres-backup-restore-azure
 
-Backup PostgresSQL to S3 (supports periodic backups)
+Docker image to easily backup PostgresSQL to Azure Blob storage (supports periodic backups) and restore from Azure blob storage.
 
-## Usage
+## Backup Usage
 
 Docker:
-```sh
-$ docker run -e S3_ACCESS_KEY_ID=key -e S3_SECRET_ACCESS_KEY=secret -e S3_BUCKET=my-bucket -e S3_PREFIX=backup -e POSTGRES_DATABASE=dbname -e POSTGRES_USER=user -e POSTGRES_PASSWORD=password -e POSTGRES_HOST=localhost schickling/postgres-backup-s3
+```
+docker run \
+  -e AZURE_STORAGE_ACCOUNT=<storage account name> \
+  -e AZURE_STORAGE_ACCESS_KEY=<azure storage access key> \
+  -e AZURE_TENANT_ID=<azure tenant id> \
+  -e AZURE_APP_ID=<azure service principle app id> \
+  -e AZURE_SECRET_ID=<azure service principle secret> \
+  -e AZURE_STORAGE_CONTAINER=<azure storage container>
+  -e POSTGRES_DATABASE=<database name> \
+  -e POSTGRES_HOST=<postgres hostname> \
+  -e POSTGRES_USER=<postgres db user> \
+  -e POSTGRES_PASSWORD=<postgres db password> \
+  postgres-azure-backup bash backup.sh
 ```
 
 Docker Compose:
@@ -17,17 +28,18 @@ postgres:
     POSTGRES_USER: user
     POSTGRES_PASSWORD: password
 
-pgbackups3:
-  image: schickling/postgres-backup-s3
+pgbackupazure:
+  image: elexy/postgres-azure-backup-restore
   links:
     - postgres
   environment:
     SCHEDULE: '@daily'
-    S3_REGION: region
-    S3_ACCESS_KEY_ID: key
-    S3_SECRET_ACCESS_KEY: secret
-    S3_BUCKET: my-bucket
-    S3_PREFIX: backup
+    AZURE_TENANT_ID: tenant1
+    AZURE_APP_ID: app_ID
+    AZURE_SECRET_ID: verysecret
+    AZURE_STORAGE_ACCOUNT: storage_account
+    AZURE_STORAGE_ACCESS_KEY: storage_key
+    AZURE_STORAGE_CONTAINER: postgres-backups
     POSTGRES_DATABASE: dbname
     POSTGRES_USER: user
     POSTGRES_PASSWORD: password
