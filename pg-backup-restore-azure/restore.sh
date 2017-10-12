@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 set -eo pipefail
 
@@ -64,10 +64,6 @@ export AZURE_STORAGE_ACCESS_KEY="$AZURE_STORAGE_ACCESS_KEY"
 export PGPASSWORD=$POSTGRES_PASSWORD
 POSTGRES_HOST_OPTS="-h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER $POSTGRES_EXTRA_OPTS"
 
-echo "Creating dump of ${POSTGRES_DATABASE} database from ${POSTGRES_HOST}..."
-
-pg_dump $POSTGRES_HOST_OPTS $POSTGRES_DATABASE | gzip > dump.sql.gz
-
 echo "logging into Azure cloud account"
 
 az login \
@@ -76,29 +72,22 @@ az login \
   --password $AZURE_SECRET_ID \
   --tenant $AZURE_TENANT_ID
 
-echo "getting DB backup"
-az storage blob list \
-  --container-name $AZURE_STORAGE_CONTAINER \
-  --query 'max_by([], &properties.lastModified)'
+if [ "${AZURE_BLOB_NAME}" = "**None**" ]; then
+  echo "Finding latest backup"
+  file=$(az storage blob list \
+    --container-name $AZURE_STORAGE_CONTAINER \
+    --query 'max_by([], &properties.lastModified)' -o tsv | cut -f3)
 
-# echo "Uploading dump to $AZURE_STORAGE_CONTAINER"
+else
+  file=${AZURE_BLOB_NAME}
+fi
 
-# az storage container create --name $AZURE_STORAGE_CONTAINER
+echo "Fetching ${file} from Azure"
 
-# az storage blob upload \
-#   --container-name $AZURE_STORAGE_CONTAINER \
-#   --name ${POSTGRES_DATABASE}_$(date +"%Y-%m-%dT%H:%M:%SZ").sql.gz \
-#   --file dump.sql.gz
-
-
-###################
-echo "Finding latest backup"
-
-LATEST_BACKUP=$(aws s3 ls s3://$S3_BUCKET/$S3_PREFIX/ | sort | tail -n 1 | awk '{ print $4 }')
-
-echo "Fetching ${LATEST_BACKUP} from S3"
-
-aws s3 cp s3://$S3_BUCKET/$S3_PREFIX/${LATEST_BACKUP} dump.sql.gz
+az storage blob download \
+    --container-name $AZURE_STORAGE_CONTAINER \
+    --name $file \
+    --file dump.sql.gz
 gzip -d dump.sql.gz
 
 if [ "${DROP_PUBLIC}" == "yes" ]; then
