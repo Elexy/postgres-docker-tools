@@ -2,6 +2,10 @@
 
 Docker image to easily backup PostgresSQL to Azure Blob storage (supports periodic backups) and restore from Azure blob storage.
 
+## credits
+This image is based on the excellent work by
+[Schikling](https://hub.docker.com/u/schickling/) for his AWS S3 [backup](https://hub.docker.com/r/schickling/postgres-backup-s3/) and [restore](https://hub.docker.com/r/schickling/postgres-restore-s3/) images.
+
 ## Backup Usage
 
 Docker:
